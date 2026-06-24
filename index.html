@@ -287,12 +287,18 @@ function buildSummary(w){
     const lines=S.items.map((it,i)=>`${i+1}. ${it.name}`).join("\n");
     const note=S.note?.trim();
     const msg="🍹 הזמנה חדשה\n\nשולחן: "+S.table+"\n\nמוצרים:\n"+lines+(note?"\n\nהערה:\n"+note:"")+"\n\n— מערכת ניהול הבר";
-    const url="https://wa.me/"+WA+"?text="+encodeURIComponent(msg);
-    const wb=d("wa-box");wb.appendChild(d("wa-ttl","לחץ על הכפתור לשליחה בוואטסאפ:"));
-    const wl=el("a","wa-link","📲 שלח הזמנה לוואטסאפ");
-    wl.href=url;wl.target="_blank";wl.rel="noopener";
-    wl.onclick=()=>setTimeout(()=>{S.items=[];S.note="";go("tables")},500);
-    wb.appendChild(wl);wb.appendChild(d("wa-note","אחרי הלחיצה — לחץ שלח בוואטסאפ"));c.appendChild(wb);
+    const wb=d("wa-box");wb.appendChild(d("wa-ttl","לחץ לשליחת ההזמנה:"));
+    const wl=b("wa-link","📲 העתק והמשך לוואטסאפ",()=>{
+      const copyMsg=()=>{try{navigator.clipboard.writeText(msg)}catch(e){const t=el("textarea");t.value=msg;t.style.position="fixed";t.style.opacity="0";document.body.appendChild(t);t.select();document.execCommand("copy");t.remove()}};
+      copyMsg();
+      toast("✓ ההודעה הועתקה — עובר לוואטסאפ");
+      setTimeout(()=>{
+        const tried=window.open("whatsapp://send?phone="+WA,"_self");
+        setTimeout(()=>window.open("https://wa.me/"+WA,"_blank"),1200);
+      },500);
+      setTimeout(()=>{S.items=[];S.note="";go("tables")},2500);
+    });
+    wb.appendChild(wl);wb.appendChild(d("wa-note","ההודעה תועתק ← פשוט הדבק בוואטסאפ ושלח"));c.appendChild(wb);
     const row=d("row");
     row.appendChild(b("btn bs","← המשך להזמין",()=>go("menu")));row.appendChild(b("btn bs","🏠",()=>go("tables")));
     c.appendChild(row);
