@@ -1,0 +1,30 @@
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  -webkit-tap-highlight-color: transparent;
+}
+
+:root {
+  --bg:     #0f0f13;
+  --sur:    #1a1a22;
+  --card:   #22222e;
+  --brd:    #2e2e3e;
+  --acc:    #f59e0b;
+  --dan:    #ef4444;
+  --txt:    #f0f0f5;
+  --mut:    #8888a0;
+  --ok:     #22c55e;
+  --r:      12px;
+}
+
+html, body, #root {
+  height: 100%;
+  background: var(--bg);
+  color: var(--txt);
+  font-family: 'Segoe UI', Arial, sans-serif;
+  direction: rtl;
+  overflow-x: hidden;
+}
+
+body { overscroll-behavior: none; }
