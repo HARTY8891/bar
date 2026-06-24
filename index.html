@@ -1,12 +1,437 @@
 <!DOCTYPE html>
 <html lang="he" dir="rtl">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-    <title>מערכת הזמנות בר</title>
-  </head>
-  <body>
-    <div id="root"></div>
-    <script type="module" src="/src/main.jsx"></script>
-  </body>
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no"/>
+<title>מערכת הזמנות בר</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+:root{--bg:#0f0f13;--sur:#1a1a22;--card:#22222e;--brd:#2e2e3e;--acc:#f59e0b;--dan:#ef4444;--txt:#f0f0f5;--mut:#8888a0;--ok:#22c55e;--r:12px}
+html,body{height:100%;background:var(--bg);color:var(--txt);font-family:'Segoe UI',Arial,sans-serif;direction:rtl;overflow-x:hidden}
+body{overscroll-behavior:none}
+.wrap{min-height:100vh;display:flex;flex-direction:column;background:var(--bg)}
+.topbar{display:flex;align-items:center;justify-content:space-between;padding:12px 16px;background:var(--sur);border-bottom:1px solid var(--brd);position:sticky;top:0;z-index:50;gap:12px}
+.t1{font-size:1rem;font-weight:700}.t2{font-size:0.72rem;color:var(--mut);margin-top:2px}
+.tbr{display:flex;gap:8px}
+.ibtn{background:var(--card);border:1px solid var(--brd);color:var(--txt);width:40px;height:40px;border-radius:8px;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:1rem;position:relative;transition:background .12s;user-select:none;flex-shrink:0}
+.ibtn:active{background:var(--brd)}
+.ibdg{position:absolute;top:-5px;left:-5px;background:var(--acc);color:#111;font-size:0.6rem;font-weight:800;border-radius:100px;padding:1px 5px;min-width:16px;text-align:center}
+.content{flex:1;padding:16px 14px 40px;max-width:860px;width:100%;margin:0 auto}
+.g5{display:grid;grid-template-columns:repeat(5,1fr);gap:9px}
+.g3{display:grid;grid-template-columns:repeat(3,1fr);gap:9px}
+.g2{display:grid;grid-template-columns:repeat(2,1fr);gap:10px}
+@media(max-width:650px){.g5{grid-template-columns:repeat(4,1fr)}.g3{grid-template-columns:repeat(2,1fr)}}
+@media(max-width:420px){.g5{grid-template-columns:repeat(3,1fr)}.g2{grid-template-columns:1fr}}
+.tbtn{background:var(--card);border:2px solid var(--brd);border-radius:var(--r);color:var(--txt);cursor:pointer;padding:12px 4px;text-align:center;transition:background .12s,transform .08s;user-select:none}
+.tbtn:active{transform:scale(.95)}
+.tbtn-lbl{font-size:0.62rem;color:var(--mut);margin-bottom:2px}
+.tbtn-n{font-size:1.3rem;font-weight:800}
+.cbtn{background:var(--card);border:1px solid var(--brd);border-radius:var(--r);color:var(--txt);cursor:pointer;padding:26px 14px;text-align:center;display:flex;flex-direction:column;align-items:center;gap:7px;transition:background .12s,transform .08s;user-select:none}
+.cbtn:active{transform:scale(.96)}
+.cbtn-lbl{font-size:1rem;font-weight:700}
+.pbtn{background:var(--card);border:1px solid var(--brd);border-radius:var(--r);color:var(--txt);cursor:pointer;padding:16px 8px;text-align:center;font-size:0.9rem;font-weight:600;transition:background .12s,transform .08s;user-select:none}
+.pbtn:active{transform:scale(.95)}
+.btn{border:none;border-radius:var(--r);cursor:pointer;font-size:0.95rem;font-weight:700;padding:12px 16px;transition:opacity .15s,transform .08s;user-select:none;text-align:center;display:inline-block;text-decoration:none}
+.btn:active{transform:scale(.97)}
+.bp{background:var(--acc);color:#111}.bs{background:var(--card);color:var(--txt);border:1px solid var(--brd)}
+.bfull{width:100%}.blg{font-size:1.05rem;padding:16px}
+.row{display:flex;gap:9px;flex-wrap:wrap;margin-top:14px}.row .btn{flex:1;min-width:90px}
+.dvd{border:none;border-top:1px solid var(--brd);margin:16px 0}
+.bdg{background:var(--acc);color:#111;font-size:0.68rem;font-weight:800;border-radius:100px;padding:2px 6px;margin-left:5px;vertical-align:middle}
+.toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:var(--ok);color:#fff;font-weight:700;font-size:0.9rem;padding:10px 24px;border-radius:100px;z-index:9999;pointer-events:none;white-space:nowrap;box-shadow:0 4px 20px rgba(0,0,0,.5)}
+.toast.err{background:var(--dan)}
+.ovl{position:fixed;inset:0;background:rgba(0,0,0,.78);z-index:200;display:flex;align-items:flex-end;justify-content:center}
+@media(min-width:500px){.ovl{align-items:center}}
+.modal{background:var(--sur);border:1px solid var(--brd);border-radius:var(--r) var(--r) 0 0;padding:24px 18px 32px;width:100%;max-width:460px;max-height:92vh;overflow-y:auto}
+@media(min-width:500px){.modal{border-radius:var(--r)}}
+.modal-title{font-size:1.1rem;font-weight:800;margin-bottom:18px}
+.msec{margin-bottom:16px}
+.mlbl{font-size:0.72rem;color:var(--mut);font-weight:600;text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px}
+.chips{display:flex;flex-wrap:wrap;gap:7px}
+.chip{background:var(--card);border:2px solid var(--brd);border-radius:100px;color:var(--txt);font-size:0.88rem;font-weight:600;padding:7px 16px;cursor:pointer;transition:border-color .12s,background .12s;user-select:none}
+.chip.on{border-color:var(--acc);background:rgba(245,158,11,.13);color:var(--acc)}
+.mrow{display:flex;gap:9px;margin-top:10px}
+.olist{list-style:none;margin-bottom:18px}
+.oitm{display:flex;align-items:center;padding:11px 0;border-bottom:1px solid var(--brd)}
+.oitm:last-child{border-bottom:none}
+.onum{color:var(--mut);font-size:0.82rem;min-width:24px;flex-shrink:0}
+.oname{flex:1;font-size:0.95rem;font-weight:600}
+.xb{background:transparent;border:none;color:var(--dan);font-size:0.95rem;cursor:pointer;padding:5px 9px;border-radius:8px;transition:background .12s;flex-shrink:0}
+.xb:active{background:rgba(239,68,68,.15)}
+.nwrap{margin-bottom:18px}
+.nlbl{font-size:0.82rem;font-weight:700;color:var(--mut);display:block;margin-bottom:7px}
+textarea{width:100%;background:var(--card);border:1px solid var(--brd);border-radius:var(--r);color:var(--txt);font-size:0.95rem;font-family:inherit;padding:12px;resize:vertical;min-height:82px;direction:rtl}
+textarea:focus{outline:2px solid var(--acc);border-color:transparent}
+textarea::placeholder{color:var(--mut)}
+.empty{text-align:center;padding:48px 16px;color:var(--mut)}
+.empty-ico{font-size:2.2rem;margin-bottom:10px}
+.wa-box{background:#0a3d1f;border:2px solid #25d366;border-radius:var(--r);padding:20px;margin-bottom:18px;text-align:center}
+.wa-ttl{font-size:0.85rem;color:#a0ffb8;margin-bottom:14px;font-weight:600}
+.wa-link{display:block;background:#25d366;color:#fff;font-size:1.1rem;font-weight:800;padding:16px;border-radius:var(--r);text-decoration:none;margin-bottom:10px}
+.wa-link:active{opacity:.85}
+.wa-note{font-size:0.75rem;color:#6fcf8a}
+/* settings */
+.scard{background:var(--sur);border:1px solid var(--brd);border-radius:var(--r);padding:18px;margin-bottom:14px}
+.sc-title{font-size:0.75rem;font-weight:700;color:var(--mut);text-transform:uppercase;letter-spacing:.6px;margin-bottom:14px}
+.sc-row{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:6px}
+.sc-lbl{font-size:0.95rem;font-weight:600;color:var(--txt)}
+.sc-val{font-size:1.3rem;font-weight:800;color:var(--acc);min-width:36px;text-align:center}
+.stepper{display:flex;align-items:center;gap:10px}
+.step-btn{background:var(--card);border:1px solid var(--brd);color:var(--txt);width:40px;height:40px;border-radius:8px;cursor:pointer;font-size:1.3rem;font-weight:700;display:flex;align-items:center;justify-content:center;transition:background .12s;user-select:none}
+.step-btn:active{background:var(--brd)}
+.step-btn:disabled{opacity:.3;cursor:default}
+.hint{font-size:0.73rem;color:var(--mut);margin-top:8px}
+/* cat manager */
+.cat-mgr-row{border:1px solid var(--brd);border-radius:10px;margin-bottom:8px;overflow:hidden}
+.cat-hdr{display:flex;align-items:center;justify-content:space-between;padding:12px 14px;background:var(--card);gap:8px;cursor:pointer;user-select:none}
+.cat-hdr-l{display:flex;align-items:center;gap:8px;flex:1;min-width:0}
+.cat-arrow{font-size:0.8rem;color:var(--mut);flex-shrink:0}
+.cat-name{font-weight:700;flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:0.95rem}
+.cat-count{font-size:0.78rem;color:var(--mut);flex-shrink:0}
+.cat-hdr-r{display:flex;gap:4px;flex-shrink:0}
+.act-btn{background:transparent;border:none;font-size:0.85rem;cursor:pointer;padding:5px 7px;border-radius:6px;transition:background .12s;color:var(--mut)}
+.act-btn:hover{background:var(--brd)}
+.act-btn.del{color:var(--dan)}
+.act-btn.del:hover{background:rgba(239,68,68,.12)}
+.prod-mgr{padding:10px 14px 14px;background:var(--bg)}
+.prod-empty{font-size:0.82rem;color:var(--mut);padding:6px 0 10px}
+.prod-list{list-style:none;margin-bottom:10px}
+.prod-row{display:flex;align-items:center;gap:8px;padding:8px 0;border-bottom:1px solid var(--brd)}
+.prod-row:last-child{border-bottom:none}
+.prod-dot{color:var(--mut);flex-shrink:0}
+.prod-name{flex:1;font-size:0.9rem;color:var(--txt)}
+.prod-acts{display:flex;gap:2px;flex-shrink:0}
+.inline-inp{background:var(--bg);border:1px solid var(--acc);border-radius:6px;color:var(--txt);font-size:0.9rem;font-family:inherit;padding:4px 8px;direction:rtl;flex:1;min-width:60px}
+.inline-inp:focus{outline:none}
+.add-row{display:flex;gap:8px;margin-top:8px}
+.add-cat-form{padding-top:14px;border-top:1px solid var(--brd);margin-top:8px}
+.finput{background:var(--card);border:1px solid var(--brd);border-radius:10px;color:var(--txt);font-size:0.9rem;font-family:inherit;padding:10px 12px;direction:rtl;flex:1}
+.finput:focus{outline:2px solid var(--acc);border-color:transparent}
+.finput::placeholder{color:var(--mut)}
+.finput.sm{font-size:0.85rem;padding:8px 10px}
+.finput.err{border-color:var(--dan)!important}
+.err-msg{font-size:0.73rem;color:var(--dan);margin-top:5px}
+</style>
+</head>
+<body>
+<div id="app"></div>
+<script>
+// ─────────────────────────────────────────────────────
+// !! החלף במספר הוואטסאפ של הדלפק (ללא + ומקפים) !!
+const WA = "972500000000";
+// ─────────────────────────────────────────────────────
+
+const DEF_CATS = [
+  {id:"softDrinks",label:"שתייה קלה",products:["קולה","קולה זירו","ספרייט","פאנטה","מים","סודה","ענבים","תפוזים","לימונדה"],isHookah:false},
+  {id:"alcohol",label:"אלכוהול",products:["בירה","ערק","וודקה","וויסקי","צ'ייסר","קוקטייל"],isHookah:false},
+  {id:"hookahs",label:"נרגילות",products:["נרגילה"],isHookah:true,flavors:["ענבים","נענע","אבטיח","לימון","אפרסק","מיקס הבית"],types:["רגיל","פרימיום"]},
+  {id:"food",label:"אוכל",products:["צ'יפס","שניצלונים","המבורגר","סלט","פיצה","נאצ'וס"],isHookah:false},
+  {id:"desserts",label:"קינוחים",products:["מלבי","סופלה","גלידה","עוגת שוקולד"],isHookah:false},
+];
+
+let S={
+  screen:"tables",table:null,cat:null,
+  items:[],note:"",
+  hFlavor:null,hType:null,
+  totalTables:30,
+  cats:DEF_CATS.map(c=>({...c,products:[...c.products]})),
+  openCatId:null,
+  newCatName:"",
+};
+let toastT=null;
+
+function uid(){return Math.random().toString(36).slice(2)+Date.now().toString(36)}
+function el(tag,cls,html){const e=document.createElement(tag);if(cls)e.className=cls;if(html!==undefined)e.innerHTML=html;return e}
+function d(cls,html){return el("div",cls,html)}
+function b(cls,txt,fn){const e=el("button",cls,txt);if(fn)e.onclick=fn;return e}
+
+function toast(msg,err){
+  document.querySelectorAll(".toast").forEach(x=>x.remove());
+  clearTimeout(toastT);
+  const t=d("toast"+(err?" err":""),msg);
+  document.body.appendChild(t);
+  toastT=setTimeout(()=>t.remove(),2200);
+}
+
+function ibtn(ico,fn,bdg){
+  const e=b("ibtn",ico,fn);
+  if(bdg){e.appendChild(el("span","ibdg",String(bdg)))}
+  return e;
+}
+
+function topbar(t1,t2,rights){
+  const bar=d("topbar");
+  const l=d("");l.appendChild(d("t1",t1));if(t2)l.appendChild(d("t2",t2));
+  bar.appendChild(l);
+  const r=d("tbr");(rights||[]).forEach(x=>r.appendChild(x));bar.appendChild(r);
+  return bar;
+}
+
+function render(){
+  const app=document.getElementById("app");
+  app.innerHTML="";
+  const w=d("wrap");
+  ({tables:buildTables,settings:buildSettings,menu:buildMenu,cat:buildCat,summary:buildSummary}[S.screen]||buildTables)(w);
+  app.appendChild(w);
+}
+function go(sc){S.screen=sc;render()}
+
+/* ── Tables ── */
+function buildTables(w){
+  w.appendChild(topbar("בחירת שולחן","לחץ על שולחן להתחלת הזמנה",[ibtn("⚙️",()=>go("settings"))]));
+  const c=d("content"),g=d("g5");
+  for(let n=1;n<=S.totalTables;n++){
+    const e=d("tbtn");
+    e.innerHTML=`<div class="tbtn-lbl">שולחן</div><div class="tbtn-n">${n}</div>`;
+    e.onclick=()=>{S.table=n;S.items=[];S.note="";go("menu")};
+    g.appendChild(e);
+  }
+  c.appendChild(g);w.appendChild(c);
+}
+
+/* ── Menu ── */
+function buildMenu(w){
+  const cnt=S.items.length;
+  w.appendChild(topbar("שולחן "+S.table,"בחר קטגוריה",[ibtn("🧾",()=>go("summary"),cnt||null),ibtn("🏠",()=>go("tables"))]));
+  const c=d("content"),g=d("g2");
+  S.cats.forEach(cat=>{
+    const e=d("cbtn");e.innerHTML=`<span class="cbtn-lbl">${cat.label}</span>`;
+    e.onclick=()=>{S.cat=cat.id;go("cat")};g.appendChild(e);
+  });
+  c.appendChild(g);c.appendChild(el("hr","dvd"));
+  const row=d("row");
+  const sb=b("btn bp","סיכום הזמנה",()=>go("summary"));
+  if(cnt)sb.prepend(el("span","bdg",String(cnt)));
+  row.appendChild(sb);row.appendChild(b("btn bs","← שולחנות",()=>go("tables")));
+  c.appendChild(row);w.appendChild(c);
+}
+
+/* ── Category ── */
+function buildCat(w){
+  const cat=S.cats.find(x=>x.id===S.cat);if(!cat){go("menu");return}
+  const cnt=S.items.length;
+  w.appendChild(topbar("שולחן "+S.table+" — "+cat.label,"לחץ על מוצר להוספה",[ibtn("🧾",()=>go("summary"),cnt||null),ibtn("←",()=>go("menu"))]));
+  const c=d("content");
+  if(!cat.products.length){
+    const em=d("empty");em.innerHTML=`<div class="empty-ico">📋</div><div>אין מוצרים בקטגוריה זו</div>`;c.appendChild(em);
+  } else {
+    const g=d("g3");
+    cat.products.forEach(prod=>{
+      const e=d("pbtn",prod);
+      e.onclick=()=>{if(cat.isHookah){S.hFlavor=null;S.hType=null;showHookah(cat)}else{addItem(prod)}};
+      g.appendChild(e);
+    });
+    c.appendChild(g);
+  }
+  c.appendChild(el("hr","dvd"));
+  const row=d("row");
+  const sb=b("btn bp","סיכום הזמנה",()=>go("summary"));
+  if(cnt)sb.prepend(el("span","bdg",String(cnt)));
+  row.appendChild(sb);row.appendChild(b("btn bs","← תפריט",()=>go("menu")));row.appendChild(b("btn bs","🏠",()=>go("tables")));
+  c.appendChild(row);w.appendChild(c);
+}
+
+/* ── Hookah Modal ── */
+function showHookah(cat){
+  const ovl=d("ovl");
+  function buildM(){
+    const m=d("modal");m.innerHTML=`<div class="modal-title">🔥 בחירת נרגילה</div>`;
+    const fs=d("msec");fs.appendChild(d("mlbl","טעם"));
+    const fc=d("chips");
+    cat.flavors.forEach(f=>{
+      const ch=d("chip"+(S.hFlavor===f?" on":""),f);
+      ch.onclick=()=>{S.hFlavor=f;ovl.innerHTML="";ovl.appendChild(buildM())};fc.appendChild(ch);
+    });
+    fs.appendChild(fc);m.appendChild(fs);
+    const ts=d("msec");ts.appendChild(d("mlbl","סוג"));
+    const tc=d("chips");
+    cat.types.forEach(t=>{
+      const ch=d("chip"+(S.hType===t?" on":""),t);
+      ch.onclick=()=>{S.hType=t;ovl.innerHTML="";ovl.appendChild(buildM())};tc.appendChild(ch);
+    });
+    ts.appendChild(tc);m.appendChild(ts);
+    const row=d("mrow");
+    const can=S.hFlavor&&S.hType;
+    const ab=b("btn bp","הוסף להזמנה",()=>{if(!can)return;addItem(`נרגילה — ${S.hFlavor} — ${S.hType}`);ovl.remove()});
+    if(!can)ab.style.opacity="0.4";
+    row.appendChild(ab);row.appendChild(b("btn bs","ביטול",()=>ovl.remove()));
+    m.appendChild(row);return m;
+  }
+  ovl.appendChild(buildM());
+  ovl.onclick=ev=>{if(ev.target===ovl)ovl.remove()};
+  document.body.appendChild(ovl);
+}
+
+function addItem(name){S.items.push({id:uid(),name});toast("✓ "+name+" נוסף");render()}
+
+/* ── Summary ── */
+function buildSummary(w){
+  const c2=S.items.length;
+  w.appendChild(topbar("סיכום הזמנה — שולחן "+S.table,c2+" פריטים",[ibtn("←",()=>go("menu")),ibtn("🏠",()=>go("tables"))]));
+  const c=d("content");
+  if(!c2){
+    const em=d("empty");em.innerHTML=`<div class="empty-ico">🛒</div><div>עדיין לא נוספו מוצרים להזמנה</div>`;
+    const mb=b("btn bs","← חזרה לתפריט",()=>go("menu"));mb.style.marginTop="18px";em.appendChild(mb);c.appendChild(em);
+  } else {
+    const ul=el("ul","olist");
+    S.items.forEach((item,i)=>{
+      const li=el("li","oitm");
+      li.appendChild(d("onum",String(i+1)+"."));li.appendChild(d("oname",item.name));
+      const xb=b("xb","✕",()=>{S.items=S.items.filter(x=>x.id!==item.id);render()});
+      li.appendChild(xb);ul.appendChild(li);
+    });
+    c.appendChild(ul);
+    const nw=d("nwrap");nw.appendChild(el("label","nlbl","הערה להזמנה"));
+    const ta=el("textarea");ta.placeholder="לדוגמה: בלי קרח, דחוף...";ta.value=S.note||"";ta.oninput=()=>{S.note=ta.value};
+    nw.appendChild(ta);c.appendChild(nw);
+    const lines=S.items.map((it,i)=>`${i+1}. ${it.name}`).join("\n");
+    const note=S.note?.trim();
+    const msg="🍹 הזמנה חדשה\n\nשולחן: "+S.table+"\n\nמוצרים:\n"+lines+(note?"\n\nהערה:\n"+note:"")+"\n\n— מערכת ניהול הבר";
+    const url="https://wa.me/"+WA+"?text="+encodeURIComponent(msg);
+    const wb=d("wa-box");wb.appendChild(d("wa-ttl","לחץ על הכפתור לשליחה בוואטסאפ:"));
+    const wl=el("a","wa-link","📲 שלח הזמנה לוואטסאפ");
+    wl.href=url;wl.target="_blank";wl.rel="noopener";
+    wl.onclick=()=>setTimeout(()=>{S.items=[];S.note="";go("tables")},500);
+    wb.appendChild(wl);wb.appendChild(d("wa-note","אחרי הלחיצה — לחץ שלח בוואטסאפ"));c.appendChild(wb);
+    const row=d("row");
+    row.appendChild(b("btn bs","← המשך להזמין",()=>go("menu")));row.appendChild(b("btn bs","🏠",()=>go("tables")));
+    c.appendChild(row);
+  }
+  w.appendChild(c);
+}
+
+/* ── Settings ── */
+function buildSettings(w){
+  w.appendChild(topbar("הגדרות","",[ibtn("✕",()=>go("tables"))]));
+  const c=d("content");
+
+  // שולחנות
+  const sc=d("scard");sc.appendChild(d("sc-title","שולחנות"));
+  const sr=d("sc-row");sr.appendChild(d("sc-lbl","מספר שולחנות"));
+  const st=d("stepper");
+  const sv=d("sc-val",String(S.totalTables));
+  const mb2=b("step-btn","−",()=>{if(S.totalTables>1){S.totalTables--;sv.textContent=String(S.totalTables);mb2.disabled=S.totalTables<=1;pb.disabled=false}});
+  mb2.disabled=S.totalTables<=1;
+  const pb=b("step-btn","+",()=>{if(S.totalTables<99){S.totalTables++;sv.textContent=String(S.totalTables);pb.disabled=S.totalTables>=99;mb2.disabled=false}});
+  pb.disabled=S.totalTables>=99;
+  st.appendChild(mb2);st.appendChild(sv);st.appendChild(pb);sr.appendChild(st);sc.appendChild(sr);
+  sc.appendChild(d("hint","ניתן להגדיר בין 1 ל-99 שולחנות"));c.appendChild(sc);
+
+  // קטגוריות
+  const sc2=d("scard");sc2.appendChild(d("sc-title","קטגוריות ומוצרים"));
+  buildCatManager(sc2);c.appendChild(sc2);
+
+  // WA
+  const sc3=d("scard");sc3.appendChild(d("sc-title","מספר וואטסאפ"));
+  const wr=d("sc-row");wr.appendChild(d("sc-lbl",""));
+  wr.querySelector(".sc-lbl").textContent=WA;wr.querySelector(".sc-lbl").style.color="var(--acc)";wr.querySelector(".sc-lbl").style.fontWeight="700";
+  sc3.appendChild(wr);sc3.appendChild(d("hint","לשינוי — ערוך את קוד המקור (משתנה WA)"));c.appendChild(sc3);
+
+  const bk=b("btn bs bfull","← חזרה למסך הראשי",()=>go("tables"));bk.style.marginTop="4px";c.appendChild(bk);
+  w.appendChild(c);
+}
+
+/* ── Category Manager ── */
+function buildCatManager(container){
+  const list=d("");
+  S.cats.forEach(cat=>list.appendChild(buildCatRow(cat)));
+  container.appendChild(list);
+
+  // הוספת קטגוריה
+  const form=d("add-cat-form");form.appendChild(d("mlbl","הוספת קטגוריה חדשה"));
+  const addRow=d("add-row");
+  const ni=el("input","finput");ni.placeholder="שם הקטגוריה...";ni.value=S.newCatName||"";
+  ni.oninput=e=>{S.newCatName=e.target.value;ni.classList.remove("err")};
+  ni.onkeydown=e=>{if(e.key==="Enter")doAddCat(ni)};
+  addRow.appendChild(ni);
+  addRow.appendChild(b("btn bp","+ הוסף",()=>doAddCat(ni)));
+  form.appendChild(addRow);
+  container.appendChild(form);
+}
+
+function doAddCat(ni){
+  const name=(S.newCatName||"").trim();
+  if(!name){ni.classList.add("err");ni.focus();return}
+  S.cats.push({id:"cat_"+uid(),label:name,products:[],isHookah:false});
+  S.newCatName="";render();
+}
+
+function buildCatRow(cat){
+  const wrap=d("cat-mgr-row");
+  const isOpen=S.openCatId===cat.id;
+
+  // header
+  const hdr=d("cat-hdr");
+  const hl=d("cat-hdr-l");
+  hl.appendChild(d("cat-arrow",isOpen?"▾":"▸"));
+
+  // שם — inline edit או טקסט
+  const nameEl=d("cat-name",cat.label);
+  hl.appendChild(nameEl);
+  hl.appendChild(d("cat-count","("+cat.products.length+")"));
+  hl.onclick=()=>{S.openCatId=isOpen?null:cat.id;render()};
+
+  const hr2=d("cat-hdr-r");
+  // כפתור עריכת שם
+  const eb=b("act-btn","✏️",e=>{
+    e.stopPropagation();
+    const inp=el("input","inline-inp");inp.value=cat.label;
+    nameEl.replaceWith(inp);inp.focus();
+    function save(){const v=inp.value.trim();if(v)cat.label=v;render()}
+    inp.onblur=save;inp.onkeydown=e2=>{if(e2.key==="Enter")save();if(e2.key==="Escape"){render()}};
+  });
+  const db=b("act-btn del","🗑️",e=>{
+    e.stopPropagation();
+    if(S.cats.length<=1)return;
+    S.cats=S.cats.filter(x=>x.id!==cat.id);
+    if(S.openCatId===cat.id)S.openCatId=null;
+    render();
+  });
+  if(S.cats.length<=1)db.style.opacity="0.3";
+  hr2.appendChild(eb);hr2.appendChild(db);
+  hdr.appendChild(hl);hdr.appendChild(hr2);
+  wrap.appendChild(hdr);
+
+  // מוצרים
+  if(isOpen){
+    const pm=d("prod-mgr");
+    if(!cat.products.length)pm.appendChild(d("prod-empty","אין מוצרים עדיין"));
+    else {
+      const ul=el("ul","prod-list");
+      cat.products.forEach(prod=>{
+        const li=el("li","prod-row");
+        li.appendChild(d("prod-dot","·"));
+        const pn=d("prod-name",prod);li.appendChild(pn);
+        const pa=d("prod-acts");
+        pa.appendChild(b("act-btn","✏️",()=>{
+          const inp=el("input","inline-inp");inp.value=prod;
+          pn.replaceWith(inp);inp.focus();
+          function save(){const v=inp.value.trim();if(v&&v!==prod){const i=cat.products.indexOf(prod);if(i>=0)cat.products[i]=v}render()}
+          inp.onblur=save;inp.onkeydown=e=>{if(e.key==="Enter")save();if(e.key==="Escape")render()};
+        }));
+        pa.appendChild(b("act-btn del","🗑️",()=>{cat.products=cat.products.filter(p=>p!==prod);render()}));
+        li.appendChild(pa);ul.appendChild(li);
+      });
+      pm.appendChild(ul);
+    }
+    // הוספת מוצר
+    const ar=d("add-row");
+    const pi=el("input","finput sm");pi.placeholder="שם מוצר חדש...";
+    pi.onkeydown=e=>{if(e.key==="Enter")doAddProd(cat,pi)};
+    ar.appendChild(pi);ar.appendChild(b("btn bp","+ הוסף",()=>doAddProd(cat,pi)));
+    pm.appendChild(ar);
+    wrap.appendChild(pm);
+  }
+  return wrap;
+}
+
+function doAddProd(cat,inp){
+  const v=inp.value.trim();
+  if(!v||cat.products.includes(v)){inp.classList.add("err");inp.focus();return}
+  cat.products.push(v);inp.value="";render();
+}
+
+render();
+</script>
+</body>
 </html>
