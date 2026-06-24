@@ -1,0 +1,906 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>מערכת הזמנות בר</title>
+  <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+  <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+  <style>
+    :root {
+      --bg:        #0f0f13;
+      --surface:   #1a1a22;
+      --card:      #22222e;
+      --border:    #2e2e3e;
+      --accent:    #f59e0b;
+      --accent-dim:#7c5209;
+      --danger:    #ef4444;
+      --text:      #f0f0f5;
+      --muted:     #8888a0;
+      --success:   #22c55e;
+      --radius:    14px;
+      --radius-sm: 8px;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+
+    html, body, #root {
+      height: 100%;
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'Segoe UI', 'Arial', sans-serif;
+      direction: rtl;
+      overflow-x: hidden;
+    }
+
+    body { overscroll-behavior: none; }
+
+    .app {
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* ── Top Bar ── */
+    .topbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 14px 20px;
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+      position: sticky;
+      top: 0;
+      z-index: 50;
+    }
+    .topbar-title {
+      font-size: 1.15rem;
+      font-weight: 700;
+      color: var(--text);
+      letter-spacing: -0.3px;
+    }
+    .topbar-subtitle {
+      font-size: 0.78rem;
+      color: var(--muted);
+      margin-top: 2px;
+    }
+    .icon-btn {
+      background: var(--card);
+      border: 1px solid var(--border);
+      color: var(--muted);
+      width: 42px; height: 42px;
+      border-radius: var(--radius-sm);
+      cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 1.2rem;
+      transition: background 0.15s, color 0.15s;
+      flex-shrink: 0;
+    }
+    .icon-btn:active { background: var(--border); color: var(--text); }
+
+    /* ── Content ── */
+    .content {
+      flex: 1;
+      padding: 20px 16px 32px;
+      max-width: 900px;
+      width: 100%;
+      margin: 0 auto;
+    }
+
+    /* ── Section Title ── */
+    .section-title {
+      font-size: 0.75rem;
+      font-weight: 600;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 0.8px;
+      margin-bottom: 14px;
+    }
+
+    /* ── Grid ── */
+    .grid-5 {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 10px;
+    }
+    .grid-4 {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 10px;
+    }
+    .grid-3 {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 10px;
+    }
+    .grid-2 {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 12px;
+    }
+    @media (max-width: 700px) {
+      .grid-5 { grid-template-columns: repeat(4, 1fr); }
+      .grid-4 { grid-template-columns: repeat(3, 1fr); }
+    }
+    @media (max-width: 480px) {
+      .grid-5 { grid-template-columns: repeat(3, 1fr); }
+      .grid-4 { grid-template-columns: repeat(2, 1fr); }
+      .grid-3 { grid-template-columns: repeat(2, 1fr); }
+    }
+
+    /* ── Table Button ── */
+    .table-btn {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      color: var(--text);
+      font-size: 0.95rem;
+      font-weight: 600;
+      cursor: pointer;
+      padding: 18px 8px;
+      text-align: center;
+      transition: background 0.12s, border-color 0.12s, transform 0.08s;
+      user-select: none;
+      position: relative;
+    }
+    .table-btn:active { transform: scale(0.96); background: var(--border); }
+    .table-btn.has-order {
+      border-color: var(--accent);
+    }
+    .table-btn.has-order .table-dot {
+      display: block;
+    }
+    .table-dot {
+      display: none;
+      width: 7px; height: 7px;
+      background: var(--accent);
+      border-radius: 50%;
+      position: absolute;
+      top: 7px;
+      left: 7px;
+    }
+
+    /* ── Category Button ── */
+    .cat-btn {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      color: var(--text);
+      font-size: 1.05rem;
+      font-weight: 700;
+      cursor: pointer;
+      padding: 28px 16px;
+      text-align: center;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 8px;
+      transition: background 0.12s, border-color 0.12s, transform 0.08s;
+      user-select: none;
+    }
+    .cat-btn:active { transform: scale(0.97); background: var(--border); }
+    .cat-btn .cat-icon { font-size: 1.7rem; }
+
+    /* ── Product Button ── */
+    .prod-btn {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      color: var(--text);
+      font-size: 1rem;
+      font-weight: 600;
+      cursor: pointer;
+      padding: 20px 12px;
+      text-align: center;
+      transition: background 0.12s, border-color 0.12s, transform 0.08s;
+      user-select: none;
+    }
+    .prod-btn:active { transform: scale(0.96); background: var(--border); }
+
+    /* ── Action Buttons ── */
+    .btn {
+      border: none;
+      border-radius: var(--radius);
+      cursor: pointer;
+      font-size: 1rem;
+      font-weight: 700;
+      padding: 14px 20px;
+      transition: opacity 0.15s, transform 0.08s;
+      user-select: none;
+      text-align: center;
+    }
+    .btn:active { transform: scale(0.97); }
+    .btn-primary {
+      background: var(--accent);
+      color: #111;
+    }
+    .btn-primary:hover { opacity: 0.9; }
+    .btn-secondary {
+      background: var(--card);
+      color: var(--text);
+      border: 1px solid var(--border);
+    }
+    .btn-secondary:hover { background: var(--border); }
+    .btn-danger {
+      background: transparent;
+      border: 1px solid var(--danger);
+      color: var(--danger);
+    }
+    .btn-danger:hover { background: rgba(239,68,68,0.1); }
+    .btn-full { width: 100%; }
+    .btn-sm { padding: 10px 14px; font-size: 0.88rem; }
+
+    /* ── Nav Row ── */
+    .nav-row {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 20px;
+      flex-wrap: wrap;
+    }
+    .nav-row .btn { flex: 1; min-width: 120px; }
+
+    /* ── Toast ── */
+    .toast {
+      position: fixed;
+      bottom: 28px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: var(--success);
+      color: #fff;
+      font-weight: 700;
+      font-size: 0.95rem;
+      padding: 12px 28px;
+      border-radius: 100px;
+      z-index: 9999;
+      pointer-events: none;
+      white-space: nowrap;
+      box-shadow: 0 4px 24px rgba(0,0,0,0.4);
+      animation: toastIn 0.25s ease;
+    }
+    @keyframes toastIn {
+      from { opacity: 0; transform: translateX(-50%) translateY(12px); }
+      to   { opacity: 1; transform: translateX(-50%) translateY(0); }
+    }
+
+    /* ── Modal ── */
+    .modal-overlay {
+      position: fixed; inset: 0;
+      background: rgba(0,0,0,0.7);
+      z-index: 200;
+      display: flex;
+      align-items: flex-end;
+      justify-content: center;
+    }
+    @media (min-width: 480px) {
+      .modal-overlay { align-items: center; }
+    }
+    .modal {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius) var(--radius) 0 0;
+      padding: 28px 20px 36px;
+      width: 100%;
+      max-width: 480px;
+      animation: slideUp 0.25s ease;
+      max-height: 90vh;
+      overflow-y: auto;
+    }
+    @media (min-width: 480px) {
+      .modal { border-radius: var(--radius); }
+    }
+    @keyframes slideUp {
+      from { transform: translateY(40px); opacity: 0; }
+      to   { transform: translateY(0); opacity: 1; }
+    }
+    .modal-title {
+      font-size: 1.15rem;
+      font-weight: 800;
+      margin-bottom: 20px;
+      color: var(--text);
+    }
+    .modal-label {
+      font-size: 0.8rem;
+      color: var(--muted);
+      font-weight: 600;
+      margin-bottom: 8px;
+      text-transform: uppercase;
+      letter-spacing: 0.6px;
+    }
+    .modal-section { margin-bottom: 20px; }
+    .chip-grid {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+    .chip {
+      background: var(--card);
+      border: 2px solid var(--border);
+      border-radius: 100px;
+      color: var(--text);
+      font-size: 0.9rem;
+      font-weight: 600;
+      padding: 8px 18px;
+      cursor: pointer;
+      transition: border-color 0.12s, background 0.12s;
+      user-select: none;
+    }
+    .chip.selected {
+      border-color: var(--accent);
+      background: rgba(245,158,11,0.15);
+      color: var(--accent);
+    }
+    .chip:active { opacity: 0.8; }
+
+    /* ── Order List ── */
+    .order-list { list-style: none; }
+    .order-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 13px 0;
+      border-bottom: 1px solid var(--border);
+    }
+    .order-item:last-child { border-bottom: none; }
+    .order-item-name {
+      font-size: 1rem;
+      font-weight: 600;
+    }
+    .order-item-num {
+      color: var(--muted);
+      font-size: 0.85rem;
+      min-width: 24px;
+      text-align: center;
+      margin-left: 10px;
+    }
+    .delete-btn {
+      background: transparent;
+      border: none;
+      color: var(--danger);
+      font-size: 1.1rem;
+      cursor: pointer;
+      padding: 6px;
+      border-radius: var(--radius-sm);
+      transition: background 0.12s;
+      flex-shrink: 0;
+    }
+    .delete-btn:active { background: rgba(239,68,68,0.15); }
+
+    /* ── Textarea ── */
+    .note-area {
+      width: 100%;
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      color: var(--text);
+      font-size: 1rem;
+      font-family: inherit;
+      padding: 14px;
+      resize: vertical;
+      min-height: 90px;
+      direction: rtl;
+      margin-top: 8px;
+    }
+    .note-area:focus { outline: 2px solid var(--accent); border-color: transparent; }
+    .note-area::placeholder { color: var(--muted); }
+
+    /* ── Empty State ── */
+    .empty {
+      text-align: center;
+      padding: 48px 20px;
+      color: var(--muted);
+      font-size: 1rem;
+    }
+    .empty-icon { font-size: 2.5rem; margin-bottom: 12px; }
+
+    /* ── Settings ── */
+    .settings-box {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 32px 24px;
+      text-align: center;
+      margin-top: 24px;
+    }
+    .settings-box p {
+      color: var(--muted);
+      font-size: 1rem;
+      line-height: 1.6;
+    }
+
+    /* ── Summary count badge ── */
+    .badge {
+      background: var(--accent);
+      color: #111;
+      font-size: 0.7rem;
+      font-weight: 800;
+      border-radius: 100px;
+      padding: 2px 7px;
+      margin-right: 6px;
+      vertical-align: middle;
+    }
+
+    /* ── Divider ── */
+    .divider {
+      border: none;
+      border-top: 1px solid var(--border);
+      margin: 20px 0;
+    }
+
+    /* spacing helpers */
+    .mb-4 { margin-bottom: 4px; }
+    .mb-8 { margin-bottom: 8px; }
+    .mb-16 { margin-bottom: 16px; }
+    .mb-20 { margin-bottom: 20px; }
+    .mb-24 { margin-bottom: 24px; }
+    .mt-16 { margin-top: 16px; }
+    .mt-20 { margin-top: 20px; }
+    .flex { display: flex; }
+    .gap-10 { gap: 10px; }
+    .items-center { align-items: center; }
+    .flex-1 { flex: 1; }
+  </style>
+</head>
+<body>
+<div id="root"></div>
+
+<script type="text/babel">
+const { useState, useEffect, useRef, useCallback } = React;
+
+// ─────────────────────────────────────────────
+// !! החלף את המספר הזה במספר הוואטסאפ של הדלפק/הבר !!
+// לדוגמה: "972501234567" (ללא + וללא מקפים)
+const WHATSAPP_PHONE_NUMBER = "972500000000";
+// ─────────────────────────────────────────────
+
+const CATEGORIES = {
+  softDrinks: {
+    label: "שתייה קלה",
+    icon: "🥤",
+    products: ["קולה", "קולה זירו", "ספרייט", "פאנטה", "מים", "סודה", "ענבים", "תפוזים", "לימונדה"],
+  },
+  alcohol: {
+    label: "אלכוהול",
+    icon: "🍺",
+    products: ["בירה", "ערק", "וודקה", "וויסקי", "צ׳ייסר", "קוקטייל"],
+  },
+  hookahs: {
+    label: "נרגילות",
+    icon: "💨",
+    products: ["נרגילה"],
+    flavors: ["ענבים", "נענע", "אבטיח", "לימון", "אפרסק", "מיקס הבית"],
+    types: ["רגיל", "פרימיום"],
+  },
+  food: {
+    label: "אוכל",
+    icon: "🍔",
+    products: ["צ׳יפס", "שניצלונים", "המבורגר", "סלט", "פיצה", "נאצ׳וס"],
+  },
+  desserts: {
+    label: "קינוחים",
+    icon: "🍮",
+    products: ["מלבי", "סופלה", "גלידה", "עוגת שוקולד"],
+  },
+};
+
+const TOTAL_TABLES = 30;
+
+function uid() {
+  return Math.random().toString(36).slice(2) + Date.now().toString(36);
+}
+
+// ── Toast ──
+function Toast({ message }) {
+  return <div className="toast">{message}</div>;
+}
+
+// ── Hookah Modal ──
+function HookahModal({ onAdd, onClose }) {
+  const cat = CATEGORIES.hookahs;
+  const [flavor, setFlavor] = useState(null);
+  const [type, setType] = useState(null);
+
+  const canAdd = flavor && type;
+
+  function handleAdd() {
+    if (!canAdd) return;
+    onAdd(`נרגילה — ${flavor} — ${type}`);
+    onClose();
+  }
+
+  return (
+    <div className="modal-overlay" onClick={onClose}>
+      <div className="modal" onClick={e => e.stopPropagation()}>
+        <div className="modal-title">🔥 בחירת נרגילה</div>
+
+        <div className="modal-section">
+          <div className="modal-label">טעם</div>
+          <div className="chip-grid">
+            {cat.flavors.map(f => (
+              <button key={f} className={`chip ${flavor === f ? "selected" : ""}`} onClick={() => setFlavor(f)}>
+                {f}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        <div className="modal-section">
+          <div className="modal-label">סוג</div>
+          <div className="chip-grid">
+            {cat.types.map(t => (
+              <button key={t} className={`chip ${type === t ? "selected" : ""}`} onClick={() => setType(t)}>
+                {t}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        <div style={{ display: "flex", gap: 10, marginTop: 8 }}>
+          <button className="btn btn-primary flex-1" onClick={handleAdd} disabled={!canAdd} style={{ opacity: canAdd ? 1 : 0.45 }}>
+            הוסף להזמנה
+          </button>
+          <button className="btn btn-secondary" onClick={onClose}>ביטול</button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ── Main App ──
+function App() {
+  const [screen, setScreen] = useState("tables");
+  const [selectedTable, setSelectedTable] = useState(null);
+  const [selectedCategory, setSelectedCategory] = useState(null);
+  const [ordersByTable, setOrdersByTable] = useState({});
+  const [toast, setToast] = useState(null);
+  const [showHookah, setShowHookah] = useState(false);
+  const toastTimer = useRef(null);
+
+  function showToast(msg) {
+    clearTimeout(toastTimer.current);
+    setToast(msg);
+    toastTimer.current = setTimeout(() => setToast(null), 2000);
+  }
+
+  function getOrder(table) {
+    return ordersByTable[table] || { tableNumber: table, items: [], note: "" };
+  }
+
+  function setOrder(table, order) {
+    setOrdersByTable(prev => ({ ...prev, [table]: order }));
+  }
+
+  function addItem(name) {
+    const order = getOrder(selectedTable);
+    setOrder(selectedTable, {
+      ...order,
+      items: [...order.items, { id: uid(), name }],
+    });
+    showToast("✓ " + name + " נוסף להזמנה");
+  }
+
+  function removeItem(itemId) {
+    const order = getOrder(selectedTable);
+    setOrder(selectedTable, {
+      ...order,
+      items: order.items.filter(i => i.id !== itemId),
+    });
+  }
+
+  function setNote(note) {
+    const order = getOrder(selectedTable);
+    setOrder(selectedTable, { ...order, note });
+  }
+
+  function sendWhatsApp() {
+    const order = getOrder(selectedTable);
+    if (order.items.length === 0) {
+      showToast("⚠️ לא ניתן לשלוח הזמנה ריקה");
+      return;
+    }
+
+    const itemsList = order.items.map((item, i) => `${i + 1}. ${item.name}`).join("\n");
+    const noteSection = order.note.trim()
+      ? `\nהערה:\n${order.note.trim()}`
+      : "";
+
+    const message =
+      `🍹 הזמנה חדשה\n\nשולחן: ${selectedTable}\n\nמוצרים:\n${itemsList}${noteSection}\n\n— מערכת ניהול הבר`;
+
+    const encoded = encodeURIComponent(message);
+    const url = `https://wa.me/${WHATSAPP_PHONE_NUMBER}?text=${encoded}`;
+    window.open(url, "_blank");
+    showToast("✓ ווטסאפ נפתח, שלח ידנית");
+  }
+
+  const orderCount = selectedTable ? (getOrder(selectedTable).items.length) : 0;
+
+  // ─── SCREENS ───
+
+  // Tables
+  if (screen === "tables") {
+    return (
+      <div className="app">
+        <div className="topbar">
+          <div>
+            <div className="topbar-title">בחירת שולחן</div>
+            <div className="topbar-subtitle">לחץ על השולחן להתחלת הזמנה</div>
+          </div>
+          <button className="icon-btn" title="הגדרות" onClick={() => setScreen("settings")}>⚙️</button>
+        </div>
+        <div className="content">
+          <div className="grid-5">
+            {Array.from({ length: TOTAL_TABLES }, (_, i) => i + 1).map(n => {
+              const hasOrder = (ordersByTable[n]?.items?.length || 0) > 0;
+              return (
+                <button
+                  key={n}
+                  className={`table-btn ${hasOrder ? "has-order" : ""}`}
+                  onClick={() => {
+                    setSelectedTable(n);
+                    setScreen("menu");
+                  }}
+                >
+                  <span className="table-dot" />
+                  <div style={{ fontSize: "0.7rem", color: "var(--muted)", marginBottom: 4 }}>שולחן</div>
+                  <div style={{ fontSize: "1.4rem", fontWeight: 800 }}>{n}</div>
+                  {hasOrder && (
+                    <div style={{ fontSize: "0.65rem", color: "var(--accent)", marginTop: 4 }}>
+                      {ordersByTable[n].items.length} פריטים
+                    </div>
+                  )}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+        {toast && <Toast message={toast} />}
+      </div>
+    );
+  }
+
+  // Settings
+  if (screen === "settings") {
+    return (
+      <div className="app">
+        <div className="topbar">
+          <div>
+            <div className="topbar-title">הגדרות</div>
+          </div>
+          <button className="icon-btn" onClick={() => setScreen("tables")}>✕</button>
+        </div>
+        <div className="content">
+          <div className="settings-box">
+            <div style={{ fontSize: "2.5rem", marginBottom: 16 }}>🛠️</div>
+            <p style={{ color: "var(--muted)", fontSize: "1rem" }}>
+              מסך הגדרות יתווסף בהמשך.<br /><br />
+              מספר ווטסאפ נוכחי:<br />
+              <span style={{ color: "var(--accent)", fontWeight: 700 }}>{WHATSAPP_PHONE_NUMBER}</span>
+            </p>
+            <button
+              className="btn btn-secondary mt-16"
+              style={{ marginTop: 24 }}
+              onClick={() => setScreen("tables")}
+            >
+              חזרה למסך הראשי
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Menu
+  if (screen === "menu") {
+    const order = getOrder(selectedTable);
+    return (
+      <div className="app">
+        <div className="topbar">
+          <div>
+            <div className="topbar-title">שולחן {selectedTable}</div>
+            <div className="topbar-subtitle">בחר קטגוריה</div>
+          </div>
+          <div style={{ display: "flex", gap: 8 }}>
+            <button className="icon-btn" title="סיכום הזמנה" style={{ position: "relative" }} onClick={() => setScreen("summary")}>
+              🧾
+              {order.items.length > 0 && (
+                <span style={{
+                  position: "absolute", top: -6, left: -6,
+                  background: "var(--accent)", color: "#111",
+                  fontSize: "0.65rem", fontWeight: 800,
+                  borderRadius: "100px", padding: "1px 6px",
+                  minWidth: 18, textAlign: "center",
+                }}>{order.items.length}</span>
+              )}
+            </button>
+            <button className="icon-btn" title="חזרה לשולחנות" onClick={() => { setSelectedTable(null); setScreen("tables"); }}>🏠</button>
+          </div>
+        </div>
+        <div className="content">
+          <div className="grid-2 mb-20">
+            {Object.entries(CATEGORIES).map(([key, cat]) => (
+              <button
+                key={key}
+                className="cat-btn"
+                onClick={() => {
+                  setSelectedCategory(key);
+                  setScreen("category");
+                }}
+              >
+                <span className="cat-icon">{cat.icon}</span>
+                <span>{cat.label}</span>
+              </button>
+            ))}
+          </div>
+
+          <hr className="divider" />
+
+          <div style={{ display: "flex", gap: 10 }}>
+            <button className="btn btn-primary flex-1" onClick={() => setScreen("summary")}>
+              {order.items.length > 0 && <span className="badge">{order.items.length}</span>}
+              סיכום הזמנה
+            </button>
+            <button className="btn btn-secondary" onClick={() => { setSelectedTable(null); setScreen("tables"); }}>
+              ← שולחנות
+            </button>
+          </div>
+        </div>
+        {toast && <Toast message={toast} />}
+      </div>
+    );
+  }
+
+  // Category / Products
+  if (screen === "category" && selectedCategory) {
+    const cat = CATEGORIES[selectedCategory];
+    const order = getOrder(selectedTable);
+    const isHookah = selectedCategory === "hookahs";
+
+    return (
+      <div className="app">
+        <div className="topbar">
+          <div>
+            <div className="topbar-title">שולחן {selectedTable} — {cat.label}</div>
+            <div className="topbar-subtitle">לחץ על מוצר להוספה להזמנה</div>
+          </div>
+          <div style={{ display: "flex", gap: 8 }}>
+            <button className="icon-btn" style={{ position: "relative" }} onClick={() => setScreen("summary")}>
+              🧾
+              {order.items.length > 0 && (
+                <span style={{
+                  position: "absolute", top: -6, left: -6,
+                  background: "var(--accent)", color: "#111",
+                  fontSize: "0.65rem", fontWeight: 800,
+                  borderRadius: "100px", padding: "1px 6px",
+                  minWidth: 18, textAlign: "center",
+                }}>{order.items.length}</span>
+              )}
+            </button>
+            <button className="icon-btn" onClick={() => setScreen("menu")}>←</button>
+          </div>
+        </div>
+
+        {showHookah && (
+          <HookahModal
+            onAdd={addItem}
+            onClose={() => setShowHookah(false)}
+          />
+        )}
+
+        <div className="content">
+          <div className="grid-3">
+            {cat.products.map(prod => (
+              <button
+                key={prod}
+                className="prod-btn"
+                onClick={() => {
+                  if (isHookah) {
+                    setShowHookah(true);
+                  } else {
+                    addItem(prod);
+                  }
+                }}
+              >
+                {cat.icon} {prod}
+              </button>
+            ))}
+          </div>
+
+          <hr className="divider" />
+
+          <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
+            <button className="btn btn-primary flex-1" onClick={() => setScreen("summary")}>
+              {order.items.length > 0 && <span className="badge">{order.items.length}</span>}
+              סיכום הזמנה
+            </button>
+            <button className="btn btn-secondary" onClick={() => setScreen("menu")}>← תפריט</button>
+            <button className="btn btn-secondary" onClick={() => { setSelectedTable(null); setScreen("tables"); }}>🏠</button>
+          </div>
+        </div>
+        {toast && <Toast message={toast} />}
+      </div>
+    );
+  }
+
+  // Summary
+  if (screen === "summary") {
+    const order = getOrder(selectedTable);
+
+    return (
+      <div className="app">
+        <div className="topbar">
+          <div>
+            <div className="topbar-title">סיכום הזמנה — שולחן {selectedTable}</div>
+            <div className="topbar-subtitle">{order.items.length} פריטים</div>
+          </div>
+          <div style={{ display: "flex", gap: 8 }}>
+            <button className="icon-btn" onClick={() => setScreen("menu")}>← תפריט</button>
+            <button className="icon-btn" onClick={() => { setSelectedTable(null); setScreen("tables"); }}>🏠</button>
+          </div>
+        </div>
+
+        <div className="content">
+          {order.items.length === 0 ? (
+            <div className="empty">
+              <div className="empty-icon">🛒</div>
+              <div>עדיין לא נוספו מוצרים להזמנה</div>
+              <button className="btn btn-secondary mt-16" style={{ marginTop: 20 }} onClick={() => setScreen("menu")}>
+                חזרה לתפריט
+              </button>
+            </div>
+          ) : (
+            <>
+              <ul className="order-list mb-20">
+                {order.items.map((item, i) => (
+                  <li key={item.id} className="order-item">
+                    <span className="order-item-num">{i + 1}.</span>
+                    <span className="order-item-name flex-1">{item.name}</span>
+                    <button className="delete-btn" onClick={() => removeItem(item.id)} title="מחק">✕</button>
+                  </li>
+                ))}
+              </ul>
+
+              <div className="mb-20">
+                <label style={{ fontSize: "0.85rem", fontWeight: 700, color: "var(--muted)" }}>
+                  הערה להזמנה
+                </label>
+                <textarea
+                  className="note-area"
+                  placeholder="לדוגמה: בלי קרח, דחוף, להוציא קודם את האוכל..."
+                  value={order.note}
+                  onChange={e => setNote(e.target.value)}
+                />
+              </div>
+
+              <button
+                className="btn btn-primary btn-full mb-20"
+                onClick={sendWhatsApp}
+                style={{ fontSize: "1.1rem", padding: "18px" }}
+              >
+                📲 שלח הזמנה לוואטסאפ
+              </button>
+
+              <div style={{ display: "flex", gap: 10 }}>
+                <button className="btn btn-secondary flex-1" onClick={() => setScreen("menu")}>
+                  ← המשך להזמין
+                </button>
+                <button className="btn btn-secondary" onClick={() => { setSelectedTable(null); setScreen("tables"); }}>
+                  🏠
+                </button>
+              </div>
+            </>
+          )}
+        </div>
+        {toast && <Toast message={toast} />}
+      </div>
+    );
+  }
+
+  return null;
+}
+
+const root = ReactDOM.createRoot(document.getElementById("root"));
+root.render(<App />);
+</script>
+</body>
+</html>
