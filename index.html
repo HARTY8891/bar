@@ -122,17 +122,16 @@ const WA = "972500000000";
 // ─────────────────────────────────────────────────────
 
 const DEF_CATS = [
-  {id:"softDrinks",label:"שתייה קלה",products:["קולה","קולה זירו","ספרייט","פאנטה","מים","סודה","ענבים","תפוזים","לימונדה"],isHookah:false},
-  {id:"alcohol",label:"אלכוהול",products:["בירה","ערק","וודקה","וויסקי","צ'ייסר","קוקטייל"],isHookah:false},
-  {id:"hookahs",label:"נרגילות",products:["נרגילה"],isHookah:true,flavors:["ענבים","נענע","אבטיח","לימון","אפרסק","מיקס הבית"],types:["רגיל","פרימיום"]},
-  {id:"food",label:"אוכל",products:["צ'יפס","שניצלונים","המבורגר","סלט","פיצה","נאצ'וס"],isHookah:false},
-  {id:"desserts",label:"קינוחים",products:["מלבי","סופלה","גלידה","עוגת שוקולד"],isHookah:false},
+  {id:"softDrinks",label:"שתייה קלה",products:["קולה","קולה זירו","ספרייט","פאנטה","מים","סודה","ענבים","תפוזים","לימונדה"]},
+  {id:"alcohol",label:"אלכוהול",products:["בירה","ערק","וודקה","וויסקי","צ'ייסר","קוקטייל"]},
+  {id:"hookahs",label:"נרגילות",products:["ענבים","נענע","אבטיח","לימון","אפרסק","מיקס הבית - רגיל","מיקס הבית - פרימיום"]},
+  {id:"food",label:"אוכל",products:["צ'יפס","שניצלונים","המבורגר","סלט","פיצה","נאצ'וס"]},
+  {id:"desserts",label:"קינוחים",products:["מלבי","סופלה","גלידה","עוגת שוקולד"]},
 ];
 
 let S={
   screen:"tables",table:null,cat:null,
   items:[],note:"",
-  hFlavor:null,hType:null,
   totalTables:30,
   cats:DEF_CATS.map(c=>({...c,products:[...c.products]})),
   openCatId:null,
@@ -218,7 +217,7 @@ function buildCat(w){
     const g=d("g3");
     cat.products.forEach(prod=>{
       const e=d("pbtn",prod);
-      e.onclick=()=>{if(cat.isHookah){S.hFlavor=null;S.hType=null;showHookah(cat)}else{addItem(prod)}};
+      e.onclick=()=>addItem(prod);
       g.appendChild(e);
     });
     c.appendChild(g);
@@ -229,37 +228,6 @@ function buildCat(w){
   if(cnt)sb.prepend(el("span","bdg",String(cnt)));
   row.appendChild(sb);row.appendChild(b("btn bs","← תפריט",()=>go("menu")));row.appendChild(b("btn bs","🏠",()=>go("tables")));
   c.appendChild(row);w.appendChild(c);
-}
-
-/* ── Hookah Modal ── */
-function showHookah(cat){
-  const ovl=d("ovl");
-  function buildM(){
-    const m=d("modal");m.innerHTML=`<div class="modal-title">🔥 בחירת נרגילה</div>`;
-    const fs=d("msec");fs.appendChild(d("mlbl","טעם"));
-    const fc=d("chips");
-    cat.flavors.forEach(f=>{
-      const ch=d("chip"+(S.hFlavor===f?" on":""),f);
-      ch.onclick=()=>{S.hFlavor=f;ovl.innerHTML="";ovl.appendChild(buildM())};fc.appendChild(ch);
-    });
-    fs.appendChild(fc);m.appendChild(fs);
-    const ts=d("msec");ts.appendChild(d("mlbl","סוג"));
-    const tc=d("chips");
-    cat.types.forEach(t=>{
-      const ch=d("chip"+(S.hType===t?" on":""),t);
-      ch.onclick=()=>{S.hType=t;ovl.innerHTML="";ovl.appendChild(buildM())};tc.appendChild(ch);
-    });
-    ts.appendChild(tc);m.appendChild(ts);
-    const row=d("mrow");
-    const can=S.hFlavor&&S.hType;
-    const ab=b("btn bp","הוסף להזמנה",()=>{if(!can)return;addItem(`נרגילה — ${S.hFlavor} — ${S.hType}`);ovl.remove()});
-    if(!can)ab.style.opacity="0.4";
-    row.appendChild(ab);row.appendChild(b("btn bs","ביטול",()=>ovl.remove()));
-    m.appendChild(row);return m;
-  }
-  ovl.appendChild(buildM());
-  ovl.onclick=ev=>{if(ev.target===ovl)ovl.remove()};
-  document.body.appendChild(ovl);
 }
 
 function addItem(name){S.items.push({id:uid(),name});toast("✓ "+name+" נוסף");render()}
@@ -281,12 +249,9 @@ function buildSummary(w){
       li.appendChild(xb);ul.appendChild(li);
     });
     c.appendChild(ul);
-    const nw=d("nwrap");nw.appendChild(el("label","nlbl","הערה להזמנה"));
-    const ta=el("textarea");ta.placeholder="לדוגמה: בלי קרח, דחוף...";ta.value=S.note||"";ta.oninput=()=>{S.note=ta.value};
-    nw.appendChild(ta);c.appendChild(nw);
     const lines=S.items.map(it=>it.name).join("\n");
     const note=S.note?.trim();
-    const msg="שולחן: "+S.table+"\nמוצרים:\n"+lines+(note?"\nהערה:\n"+note:"");
+    const msg="שולחן: "+S.table+"\n"+lines;
     const wb=d("wa-box");wb.appendChild(d("wa-ttl","לחץ לשליחת ההזמנה:"));
     const wl=b("wa-link","📲 העתק והמשך לוואטסאפ",()=>{
       try{navigator.clipboard.writeText(msg)}catch(e){const t=el("textarea");t.value=msg;t.style.position="fixed";t.style.opacity="0";document.body.appendChild(t);t.select();document.execCommand("copy");t.remove()};
@@ -354,7 +319,7 @@ function buildCatManager(container){
 function doAddCat(ni){
   const name=(S.newCatName||"").trim();
   if(!name){ni.classList.add("err");ni.focus();return}
-  S.cats.push({id:"cat_"+uid(),label:name,products:[],isHookah:false});
+  S.cats.push({id:"cat_"+uid(),label:name,products:[]});
   S.newCatName="";render();
 }
 
