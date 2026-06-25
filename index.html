@@ -112,6 +112,7 @@ textarea::placeholder{color:var(--mut)}
 .finput.err{border-color:var(--dan)!important}
 .err-msg{font-size:0.73rem;color:var(--dan);margin-top:5px}
 </style>
+<script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js"></script>
 </head>
 <body>
 <div id="app"></div>
@@ -121,19 +122,49 @@ textarea::placeholder{color:var(--mut)}
 const WA = "972500000000";
 // ─────────────────────────────────────────────────────
 
-const DEF_CATS = [
-  {id:"cat_0",label:"שתייה קלה",products:["קולה", "קולה זירו", "ספרייט", "פאנטה", "מים", "סודה", "ענבים", "תפוזים", "לימונדה"]},
-  {id:"cat_1",label:"אלכוהול",products:["בירה", "ערק", "וודקה", "וויסקי", "צ'ייסר", "קוקטייל"]},
-  {id:"cat_2",label:"נרגילות",products:["ענבים", "נענע", "אבטיח", "לימון", "אפרסק", "מיקס הבית - רגיל", "מיקס הבית - פרימיום"]},
-  {id:"cat_3",label:"אוכל",products:["צ'יפס", "שניצלונים", "המבורגר", "סלט", "פיצה", "נאצ'וס"]},
-  {id:"cat_4",label:"קינוחים",products:["מלבי", "סופלה", "גלידה", "עוגת שוקולד"]}
+// ── שם קובץ האקסל ב-repo ──
+const EXCEL_FILE = "קטגוריות_ומוצרים.xlsx";
+
+const FALLBACK_CATS = [
+  {id:"cat_0",label:"שתייה קלה",products:["קולה","קולה זירו","ספרייט","פנטא","מים"]},
 ];
+
+function parseCatsFromWorkbook(wb) {
+  const ws = wb.Sheets[wb.SheetNames[0]];
+  const rows = XLSX.utils.sheet_to_json(ws, {header:1, defval:""});
+  const catMap = {}, catOrder = [];
+  let lastCat = null;
+  for (let i = 3; i < rows.length; i++) {
+    const cat  = String(rows[i][0] || "").trim();
+    const prod = String(rows[i][1] || "").trim();
+    if (!cat && !prod) continue;
+    const curCat = cat || lastCat;
+    if (!curCat) continue;
+    if (!catMap[curCat]) { catMap[curCat] = []; catOrder.push(curCat); }
+    if (prod) catMap[curCat].push(prod);
+    if (cat) lastCat = cat;
+  }
+  return catOrder.map((label, i) => ({id:"cat_"+i, label, products: catMap[label]}));
+}
+
+async function loadCatsFromExcel() {
+  try {
+    const res = await fetch(EXCEL_FILE + "?t=" + Date.now());
+    if (!res.ok) throw new Error("HTTP " + res.status);
+    const buf = await res.arrayBuffer();
+    const wb  = XLSX.read(buf, {type:"array"});
+    return parseCatsFromWorkbook(wb);
+  } catch(e) {
+    console.warn("לא ניתן לטעון אקסל:", e.message);
+    return null;
+  }
+}
 
 let S={
   screen:"tables",table:null,cat:null,
   items:[],note:"",
   totalTables:30,
-  cats:DEF_CATS.map(c=>({...c,products:[...c.products]})),
+  cats:FALLBACK_CATS.map(c=>({...c,products:[...c.products]})),
   openCatId:null,
   newCatName:"",
 };
@@ -398,7 +429,14 @@ function doAddProd(cat,inp){
   cat.products.push(v);inp.value="";render();
 }
 
-render();
+async function init() {
+  const cats = await loadCatsFromExcel();
+  if (cats && cats.length) {
+    S.cats = cats;
+  }
+  render();
+}
+init();
 </script>
 </body>
 </html>
