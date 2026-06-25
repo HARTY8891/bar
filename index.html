@@ -284,9 +284,9 @@ function buildSummary(w){
     const nw=d("nwrap");nw.appendChild(el("label","nlbl","הערה להזמנה"));
     const ta=el("textarea");ta.placeholder="לדוגמה: בלי קרח, דחוף...";ta.value=S.note||"";ta.oninput=()=>{S.note=ta.value};
     nw.appendChild(ta);c.appendChild(nw);
-    const lines=S.items.map((it,i)=>`${i+1}. ${it.name}`).join("\n");
+    const lines=S.items.map(it=>it.name).join("\n");
     const note=S.note?.trim();
-    const msg="🍹 הזמנה חדשה\n\nשולחן: "+S.table+"\n\nמוצרים:\n"+lines+(note?"\n\nהערה:\n"+note:"")+"\n\n— מערכת ניהול הבר";
+    const msg="שולחן: "+S.table+"\nמוצרים:\n"+lines+(note?"\nהערה:\n"+note:"");
     const wb=d("wa-box");wb.appendChild(d("wa-ttl","לחץ לשליחת ההזמנה:"));
     const wl=b("wa-link","📲 העתק והמשך לוואטסאפ",()=>{
       try{navigator.clipboard.writeText(msg)}catch(e){const t=el("textarea");t.value=msg;t.style.position="fixed";t.style.opacity="0";document.body.appendChild(t);t.select();document.execCommand("copy");t.remove()};
