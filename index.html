@@ -163,8 +163,6 @@ let S={
   items:[],
   totalTables:30,
   cats: FALLBACK_CATS.map(c=>({...c,products:[...c.products]})),
-  openCatId:null,
-  newCatName:"",
 };
 let toastT=null;
 
@@ -314,9 +312,6 @@ function buildSettings(w){
   st.appendChild(mb2);st.appendChild(sv);st.appendChild(pb);sr.appendChild(st);sc.appendChild(sr);
   sc.appendChild(d("hint","ניתן להגדיר בין 1 ל-99 שולחנות"));c.appendChild(sc);
 
-  const sc2=d("scard");sc2.appendChild(d("sc-title","קטגוריות ומוצרים"));
-  buildCatManager(sc2);c.appendChild(sc2);
-
   const sc3=d("scard");sc3.appendChild(d("sc-title","קובץ אקסל"));
   const xlRow=d("sc-row");
   const xlLbl=d("sc-lbl","קטגוריות_ומוצרים.xlsx");xlLbl.style.cssText="color:var(--acc);font-weight:700";
@@ -333,90 +328,6 @@ function buildSettings(w){
 
   const bk=b("btn bs bfull","← חזרה למסך הראשי",()=>go("tables"));bk.style.marginTop="4px";c.appendChild(bk);
   w.appendChild(c);
-}
-
-/* ── Category Manager ── */
-function buildCatManager(container){
-  const list=d("");
-  S.cats.forEach(cat=>list.appendChild(buildCatRow(cat)));
-  container.appendChild(list);
-  const form=d("add-cat-form");form.appendChild(d("mlbl","הוספת קטגוריה חדשה"));
-  const addRow=d("add-row");
-  const ni=el("input","finput");ni.placeholder="שם הקטגוריה...";ni.value=S.newCatName||"";
-  ni.oninput=e=>{S.newCatName=e.target.value;ni.classList.remove("err")};
-  ni.onkeydown=e=>{if(e.key==="Enter")doAddCat(ni)};
-  addRow.appendChild(ni);addRow.appendChild(b("btn bp","+ הוסף",()=>doAddCat(ni)));
-  form.appendChild(addRow);container.appendChild(form);
-}
-
-function doAddCat(ni){
-  const name=(S.newCatName||"").trim();
-  if(!name){ni.classList.add("err");ni.focus();return}
-  S.cats.push({id:"cat_"+uid(),label:name,products:[]});
-  S.newCatName="";render();
-}
-
-function buildCatRow(cat){
-  const wrap=d("cat-mgr-row");
-  const isOpen=S.openCatId===cat.id;
-  const hdr=d("cat-hdr");
-  const hl=d("cat-hdr-l");
-  hl.appendChild(d("cat-arrow",isOpen?"▾":"▸"));
-  const nameEl=d("cat-name",cat.label);
-  hl.appendChild(nameEl);hl.appendChild(d("cat-count","("+cat.products.length+")"));
-  hl.onclick=()=>{S.openCatId=isOpen?null:cat.id;render()};
-  const hr2=d("cat-hdr-r");
-  const eb=b("act-btn","✏️",e=>{
-    e.stopPropagation();
-    const inp=el("input","inline-inp");inp.value=cat.label;
-    nameEl.replaceWith(inp);inp.focus();
-    function save(){const v=inp.value.trim();if(v)cat.label=v;render()}
-    inp.onblur=save;inp.onkeydown=e2=>{if(e2.key==="Enter")save();if(e2.key==="Escape")render()};
-  });
-  const db=b("act-btn del","🗑️",e=>{
-    e.stopPropagation();
-    if(S.cats.length<=1)return;
-    S.cats=S.cats.filter(x=>x.id!==cat.id);
-    if(S.openCatId===cat.id)S.openCatId=null;
-    render();
-  });
-  if(S.cats.length<=1)db.style.opacity="0.3";
-  hr2.appendChild(eb);hr2.appendChild(db);
-  hdr.appendChild(hl);hdr.appendChild(hr2);wrap.appendChild(hdr);
-  if(isOpen){
-    const pm=d("prod-mgr");
-    if(!cat.products.length)pm.appendChild(d("prod-empty","אין מוצרים עדיין"));
-    else{
-      const ul=el("ul","prod-list");
-      cat.products.forEach(prod=>{
-        const li=el("li","prod-row");
-        li.appendChild(d("prod-dot","·"));
-        const pn=d("prod-name",prod);li.appendChild(pn);
-        const pa=d("prod-acts");
-        pa.appendChild(b("act-btn","✏️",()=>{
-          const inp=el("input","inline-inp");inp.value=prod;
-          pn.replaceWith(inp);inp.focus();
-          function save(){const v=inp.value.trim();if(v&&v!==prod){const i=cat.products.indexOf(prod);if(i>=0)cat.products[i]=v}render()}
-          inp.onblur=save;inp.onkeydown=e=>{if(e.key==="Enter")save();if(e.key==="Escape")render()};
-        }));
-        pa.appendChild(b("act-btn del","🗑️",()=>{cat.products=cat.products.filter(p=>p!==prod);render()}));
-        li.appendChild(pa);ul.appendChild(li);
-      });
-      pm.appendChild(ul);
-    }
-    const ar=d("add-row");
-    const pi=el("input","finput sm");pi.placeholder="שם מוצר חדש...";
-    pi.onkeydown=e=>{if(e.key==="Enter")doAddProd(cat,pi)};
-    ar.appendChild(pi);ar.appendChild(b("btn bp","+ הוסף",()=>doAddProd(cat,pi)));
-    pm.appendChild(ar);wrap.appendChild(pm);
-  }
-  return wrap;
-}
-
-function doAddProd(cat,inp){
-  const v=inp.value.trim();
-  if(!v||cat.products.includes(v)){inp.classList.add("err");inp.focus();return}
-  cat.products.push(v);inp.value="";render();
 }
 
 /* ── Boot ── */
